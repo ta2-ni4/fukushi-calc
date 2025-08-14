@@ -1,148 +1,146 @@
-/* ===== iPhone向け 基本設定 ===== */
-:root{
-  /* ベースの大きさ（後でclampで調整） */
-  --base-font: 18px;
-  --radius: 12px;
-  --gap: 12px;
-  --tap-min: 44px; /* Apple推奨タップ領域 */
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>福祉用具 点数計算</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    /* ===== 全体の文字サイズを大きく ===== */
+    body {
+      font-family: sans-serif;
+      padding: 1em;
+      font-size: 20px;
+      line-height: 1.6;
+    }
+
+    /* ===== 入力欄 ===== */
+    input {
+      width: 100%;
+      font-size: 18px;
+      padding: 0.8em;
+      margin-bottom: 1em;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    /* ===== 検索結果アイテム ===== */
+    .item {
+      border-bottom: 1px solid #ccc;
+      padding: 1em 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 18px;
+    }
+
+    /* ===== ボタン ===== */
+    button {
+      font-size: 18px;
+      padding: 0.6em 1em;
+      border-radius: 8px;
+      border: none;
+      background-color: #007aff;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:active {
+      background-color: #005bb5;
+    }
+
+    /* ===== 追加済みアイテム ===== */
+    .selected {
+      background: #eef;
+      padding: 0.8em;
+      margin-top: 0.5em;
+      border-radius: 8px;
+      font-size: 18px;
+    }
+
+    /* ===== 合計表示 ===== */
+    #total {
+      font-size: 22px;
+      color: #007aff;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<h1>福祉用具検索</h1>
+<input type="text" id="search" placeholder="品目名を検索">
+
+<div id="results"></div>
+
+<h2>追加済み</h2>
+<div id="selected"></div>
+<p><strong>合計点数: <span id="total">0</span></strong></p>
+
+<script>
+let items = [];
+let selectedItems = [];
+
+// CSVを読み込み
+fetch('fukushi.csv')
+  .then(response => response.text())
+  .then(csv => {
+    const lines = csv.trim().split('\n').slice(1); // ヘッダー行除外
+    items = lines.map(line => {
+      const [name, score] = line.split(',');
+      return { name, score: parseInt(score) };
+    });
+    displayResults('');
+  });
+
+// 検索イベント
+document.getElementById('search').addEventListener('input', (e) => {
+  displayResults(e.target.value);
+});
+
+// 検索結果表示
+function displayResults(query) {
+  const filtered = items.filter(item =>
+    item.name.includes(query)
+  );
+  const results = document.getElementById('results');
+  results.innerHTML = '';
+  filtered.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.textContent = `${item.name}（${item.score}点）`;
+
+    const btn = document.createElement('button');
+    btn.textContent = '追加';
+    btn.onclick = () => addItem(item);
+
+    div.appendChild(btn);
+    results.appendChild(div);
+  });
 }
 
-html{
-  -webkit-text-size-adjust: 100%;
-  font-size: var(--base-font);
+// 品目追加
+function addItem(item) {
+  selectedItems.push(item);
+  updateSelected();
 }
 
-body{
-  margin: 0;
-  padding: 16px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-               "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Meiryo", sans-serif;
-  line-height: 1.6;
-  color: #111;
-  background: #fff;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+// 追加済みリスト更新
+function updateSelected() {
+  const selectedDiv = document.getElementById('selected');
+  selectedDiv.innerHTML = '';
+  let total = 0;
+  selectedItems.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'selected';
+    div.textContent = `${item.name}（${item.score}点）`;
+    selectedDiv.appendChild(div);
+    total += item.score;
+  });
+  document.getElementById('total').textContent = total;
 }
+</script>
 
-/* ===== タイポ（clampで最小〜最大を制御） ===== */
-h1{ font-size: clamp(22px, 4.5vw, 28px); margin: 0 0 12px; }
-h2{ font-size: clamp(18px, 4vw, 22px); margin: 20px 0 8px; }
-p, li, .text{ font-size: clamp(16px, 3.8vw, 20px); }
-
-/* ===== 入力 ===== */
-input[type="text"], input[type="search"]{
-  width: 100%;
-  font-size: 18px; /* 16px未満だとiOSでズームが発生しやすい */
-  padding: 12px 14px;
-  min-height: var(--tap-min);
-  border: 1px solid #d0d5dd;
-  border-radius: var(--radius);
-  box-sizing: border-box;
-  outline: none;
-  background: #fff;
-}
-input::placeholder{ color:#98a2b3; }
-input:focus{
-  border-color:#007aff;
-  box-shadow: 0 0 0 3px rgba(0,122,255,.15);
-}
-
-/* ===== リスト（検索結果・選択済み） ===== */
-.list{ display: grid; gap: var(--gap); }
-
-.item{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: var(--radius);
-  background: #fff;
-}
-
-.item-name{
-  font-size: clamp(16px, 3.8vw, 20px);
-  font-weight: 500;
-}
-
-.item-score{ color:#475467; }
-
-/* ===== ボタン ===== */
-button{
-  font-size: 18px;
-  font-weight: 600;
-  padding: 10px 16px;
-  min-height: var(--tap-min);
-  min-width: 88px;
-  border: 0;
-  border-radius: 10px;
-  color: #fff;
-  background: #007aff;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-button:active{ background:#005bb5; }
-button:disabled{ opacity:.6; cursor: not-allowed; }
-
-/* アイコンボタンなど小さく見える要素もタップ面積を確保 */
-.icon-btn{
-  display:inline-flex; align-items:center; justify-content:center;
-  min-height: var(--tap-min); min-width: var(--tap-min);
-  padding: 8px; border-radius: 50%;
-}
-
-/* ===== 追加済み表示 ===== */
-.selected{
-  display: grid; gap: 8px;
-}
-.selected-item{
-  background:#f0f6ff;
-  border:1px solid #d6e4ff;
-  border-radius: var(--radius);
-  padding: 12px 14px;
-  display:flex; align-items:center; justify-content:space-between; gap: 12px;
-}
-
-/* 削除ボタン（あれば） */
-.btn-delete{
-  background:#ef4444;
-}
-.btn-delete:active{ background:#b91c1c; }
-
-/* ===== 合計 ===== */
-.total-wrap{
-  display:flex; align-items:center; justify-content:space-between;
-  margin-top: 12px;
-  padding: 12px 14px;
-  border-radius: var(--radius);
-  background:#f9fafb;
-  border:1px solid #e5e7eb;
-}
-#total{
-  font-size: clamp(20px, 5vw, 26px);
-  color:#007aff;
-  font-weight: 800;
-}
-
-/* ===== 底部に余白（ホームバー被り対策） ===== */
-.safe-bottom{ padding-bottom: max(16px, env(safe-area-inset-bottom)); }
-
-/* ===== iOSで活きる細かいUX ===== */
-* { -webkit-tap-highlight-color: rgba(0,0,0,0); }
-:focus-visible{ outline: 3px solid rgba(0,122,255,.35); outline-offset: 2px; }
-
-/* ===== ダークモード対応（任意） ===== */
-@media (prefers-color-scheme: dark){
-  body{ background:#0b0b0c; color:#f3f4f6; }
-  input{ background:#111214; color:#f3f4f6; border-color:#2b2f36; }
-  .item{ background:#111214; border-color:#2b2f36; }
-  .selected-item{ background:#0f1a2b; border-color:#20304b; }
-  .total-wrap{ background:#121417; border-color:#2b2f36; }
-}
-
-/* ===== 多少広い画面（iPad/横向き）で少し詰める ===== */
-@media (min-width: 640px){
-  :root{ --base-font: 17px; }
-  body{ padding: 20px; }
-}
+</body>
+</html>
