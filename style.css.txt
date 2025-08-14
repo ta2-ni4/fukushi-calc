@@ -1,27 +1,146 @@
-body {
-  font-family: sans-serif;
-  margin: 20px;
-}
-input {
-  padding: 8px;
-  width: 100%;
-}
-li {
-  padding: 5px;
-  border-bottom: 1px solid #ccc;
-  cursor: pointer;
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>福祉用具 点数計算</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    /* ===== 全体の文字サイズを大きく ===== */
+    body {
+      font-family: sans-serif;
+      padding: 1em;
+      font-size: 20px;
+      line-height: 1.6;
+    }
+
+    /* ===== 入力欄 ===== */
+    input {
+      width: 100%;
+      font-size: 18px;
+      padding: 0.8em;
+      margin-bottom: 1em;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    /* ===== 検索結果アイテム ===== */
+    .item {
+      border-bottom: 1px solid #ccc;
+      padding: 1em 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 18px;
+    }
+
+    /* ===== ボタン ===== */
+    button {
+      font-size: 18px;
+      padding: 0.6em 1em;
+      border-radius: 8px;
+      border: none;
+      background-color: #007aff;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:active {
+      background-color: #005bb5;
+    }
+
+    /* ===== 追加済みアイテム ===== */
+    .selected {
+      background: #eef;
+      padding: 0.8em;
+      margin-top: 0.5em;
+      border-radius: 8px;
+      font-size: 18px;
+    }
+
+    /* ===== 合計表示 ===== */
+    #total {
+      font-size: 22px;
+      color: #007aff;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<h1>福祉用具検索</h1>
+<input type="text" id="search" placeholder="品目名を検索">
+
+<div id="results"></div>
+
+<h2>追加済み</h2>
+<div id="selected"></div>
+<p><strong>合計点数: <span id="total">0</span></strong></p>
+
+<script>
+let items = [];
+let selectedItems = [];
+
+// CSVを読み込み
+fetch('fukushi.csv')
+  .then(response => response.text())
+  .then(csv => {
+    const lines = csv.trim().split('\n').slice(1); // ヘッダー行除外
+    items = lines.map(line => {
+      const [name, score] = line.split(',');
+      return { name, score: parseInt(score) };
+    });
+    displayResults('');
+  });
+
+// 検索イベント
+document.getElementById('search').addEventListener('input', (e) => {
+  displayResults(e.target.value);
+});
+
+// 検索結果表示
+function displayResults(query) {
+  const filtered = items.filter(item =>
+    item.name.includes(query)
+  );
+  const results = document.getElementById('results');
+  results.innerHTML = '';
+  filtered.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.textContent = `${item.name}（${item.score}点）`;
+
+    const btn = document.createElement('button');
+    btn.textContent = '追加';
+    btn.onclick = () => addItem(item);
+
+    div.appendChild(btn);
+    results.appendChild(div);
+  });
 }
 
-/* ここに追加しよう！ */
-button {
-  background-color: transparent;
-  border: none;
-  color: red;
-  cursor: pointer;
-  font-size: 16px;
-  margin-left: 10px;
+// 品目追加
+function addItem(item) {
+  selectedItems.push(item);
+  updateSelected();
 }
 
-button:hover {
-  color: darkred;
+// 追加済みリスト更新
+function updateSelected() {
+  const selectedDiv = document.getElementById('selected');
+  selectedDiv.innerHTML = '';
+  let total = 0;
+  selectedItems.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'selected';
+    div.textContent = `${item.name}（${item.score}点）`;
+    selectedDiv.appendChild(div);
+    total += item.score;
+  });
+  document.getElementById('total').textContent = total;
 }
+</script>
+
+</body>
+</html>
