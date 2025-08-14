@@ -1,146 +1,78 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>福祉用具 点数計算</title>
-  <link rel="manifest" href="manifest.json">
-  <style>
-    /* ===== 全体の文字サイズを大きく ===== */
+/* ===========================
+   基本のスタイル設定
+=========================== */
+
+/* ページ全体の基本設定 */
+body {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 18px; /* 基本文字サイズを少し大きめに */
+    line-height: 1.6;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f9fa;
+}
+
+/* ヘッダー */
+header {
+    background-color: #007bff;
+    color: #fff;
+    padding: 15px;
+    text-align: center;
+    font-size: 1.5em;
+}
+
+/* コンテナ */
+.container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 0 15px;
+}
+
+/* ボタン */
+button {
+    font-size: 1.1em;
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* 入力フィールド */
+input, select, textarea {
+    font-size: 1.1em;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ===========================
+   iPhoneなど小さい画面向け調整
+=========================== */
+@media (max-width: 480px) {
     body {
-      font-family: sans-serif;
-      padding: 1em;
-      font-size: 20px;
-      line-height: 1.6;
+        font-size: 20px; /* スマホ時はさらに大きく */
     }
 
-    /* ===== 入力欄 ===== */
-    input {
-      width: 100%;
-      font-size: 18px;
-      padding: 0.8em;
-      margin-bottom: 1em;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
+    header {
+        font-size: 1.8em;
+        padding: 20px 10px;
     }
 
-    /* ===== 検索結果アイテム ===== */
-    .item {
-      border-bottom: 1px solid #ccc;
-      padding: 1em 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 18px;
+    button, input, select, textarea {
+        font-size: 1.2em;
+        padding: 12px;
     }
 
-    /* ===== ボタン ===== */
-    button {
-      font-size: 18px;
-      padding: 0.6em 1em;
-      border-radius: 8px;
-      border: none;
-      background-color: #007aff;
-      color: white;
-      cursor: pointer;
+    .container {
+        padding: 0 10px;
     }
-
-    button:active {
-      background-color: #005bb5;
-    }
-
-    /* ===== 追加済みアイテム ===== */
-    .selected {
-      background: #eef;
-      padding: 0.8em;
-      margin-top: 0.5em;
-      border-radius: 8px;
-      font-size: 18px;
-    }
-
-    /* ===== 合計表示 ===== */
-    #total {
-      font-size: 22px;
-      color: #007aff;
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
-
-<h1>福祉用具検索</h1>
-<input type="text" id="search" placeholder="品目名を検索">
-
-<div id="results"></div>
-
-<h2>追加済み</h2>
-<div id="selected"></div>
-<p><strong>合計点数: <span id="total">0</span></strong></p>
-
-<script>
-let items = [];
-let selectedItems = [];
-
-// CSVを読み込み
-fetch('fukushi.csv')
-  .then(response => response.text())
-  .then(csv => {
-    const lines = csv.trim().split('\n').slice(1); // ヘッダー行除外
-    items = lines.map(line => {
-      const [name, score] = line.split(',');
-      return { name, score: parseInt(score) };
-    });
-    displayResults('');
-  });
-
-// 検索イベント
-document.getElementById('search').addEventListener('input', (e) => {
-  displayResults(e.target.value);
-});
-
-// 検索結果表示
-function displayResults(query) {
-  const filtered = items.filter(item =>
-    item.name.includes(query)
-  );
-  const results = document.getElementById('results');
-  results.innerHTML = '';
-  filtered.forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'item';
-    div.textContent = `${item.name}（${item.score}点）`;
-
-    const btn = document.createElement('button');
-    btn.textContent = '追加';
-    btn.onclick = () => addItem(item);
-
-    div.appendChild(btn);
-    results.appendChild(div);
-  });
 }
-
-// 品目追加
-function addItem(item) {
-  selectedItems.push(item);
-  updateSelected();
-}
-
-// 追加済みリスト更新
-function updateSelected() {
-  const selectedDiv = document.getElementById('selected');
-  selectedDiv.innerHTML = '';
-  let total = 0;
-  selectedItems.forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'selected';
-    div.textContent = `${item.name}（${item.score}点）`;
-    selectedDiv.appendChild(div);
-    total += item.score;
-  });
-  document.getElementById('total').textContent = total;
-}
-</script>
-
-</body>
-</html>
